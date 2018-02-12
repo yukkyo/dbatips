@@ -1,3 +1,6 @@
+問題を解いたり教科書読んだときのポイント
+カッコの中は章と問題番号
+
 # Data Pump
 
 * 12c ～ 全体トランスポータブル・エクスポート/インポート(フル・トランスポータブル・エクスポート/インポート)
@@ -109,3 +112,306 @@ CREATE PROFILE
 * 軽量ジョブ
 * リモート・データベースにおけるジョブのスケジューリング
 * スケジューラとリソース・マネージャの連携
+
+# SQL Developer ができることできないこと(2-3)
+
+SQL Developer は DB 作成はできない。
+できるのは以下のようなもの
+
+* RMAN バックアップ/リカバリ
+* DB 起動
+* Data Pump インポート/エクスポート
+
+# SQL*Loader(2-3)
+
+csv や テキストを高速ロード
+
+1. CSV, Text 作成
+2. 制御ファイル作成
+3. コマンド実行 `SQLLDR USERID=scott/tiger, CONTROL=sample.ctl`
+
+* sample.ctl の内訳
+
+```sql
+LOAD DATA
+INFILE 'filename.csv'
+INTO TABLE EMP
+APPEND
+FIELD TERMINATED BY ','
+(EMP_ID, EMP_...)
+```
+
+# SPFILE のロード(3-1)
+
+デフォルトでは「SPFILESID.ora → SPFILE → PFILE」で検索
+PDB と CDB　では `CREATE SPFILE FROM MEMORY` の挙動が違う。
+CDB では名前を変えないと再作成できない。PDBはできる。
+PDB は内部的に格納する。
+
+# アラートログ(3-5)
+
+* アラートログ
+  * 破損ブロック(ORA-01578)
+  * 共有メモリエラー(ORA-04031)
+  * 物理構造変更 SQL
+  * ログスイッチやアーカイブログの作成時刻
+  * インスタンスリカバリ + クラッシュリカバリ情報
+  * デッドロック情報
+  * 不完全なチェックポイント(未完了のチェックポイントによるREDOからの上書き)
+  * チェックポイントの開始時刻と終了時刻
+  * `ALTER SYSTEM` による変更
+  * オブジェクトに対する `DROP, TRUNC` は**含まれない**
+
+# DICTIONARY ビューについて(問題3-6)
+
+* DICTIONARYビュー(DICT シノニム)は現 session でアクセス可能なディクショナリビューと v\$ビューの一覧
+* v\$ビューの基礎表(固定表)の一覧を確認するには v\$FIXED_TABLE を参照
+
+# DDL ログ(3-8)
+
+* `ENABLE_DDL_LOGGING` を TRUE にすればとれる
+* 自動診断レポジトリ
+  * テキストと XML の両形式がある
+* ユーザーの作成や変更、権限付与や取り消しは **記録されない**
+
+# sqlnet.ora(4-1)
+
+* sqlnet.ora : 名前解決(ネーミングメソッド)、暗号化などの設定
+  * `NAMES.DIRECTORY_PATH=(方法1, 方法2,...)`
+  * 方法は以下の通り
+    * TNSNAMES, EZ_CONNECT, LDAP(ディレクトリサーバー)
+* tnsnames.ora : ネット設定
+
+# ネーミングメソッド(4-2)
+
+* 簡易接続
+  * プロトコルは TCP/IP のみ。`sqlplus username/password@` で接続するやつ
+* ローカルネーミング
+  * クライアント側の tnsnames.ora を使用
+  * @ネットサービス名 で使用
+  * 各種プロトコルや failover, loadbalance 使用可能
+* ディレクトリネーミング
+  * ディレクトリサーバー使用(LDAP)
+  * sqlnet.ora に `NAMES.DIRECTORY_PATH=LDAP` が必要
+* 外部ネーミング
+  * 外部サーバー(NIS) 使用
+  * sqlnet.ora に `NAMES.DIRECTORY_PATH=NIS` が必要
+
+# Oracle Net Configuration Assistant, NETCA(4-3)
+以下のことが設定できる
+
+* リスナー構成
+  * リスナーの追加、削除、名前の変更を listener.ora に保存
+* ネーミング構成
+  * 使用するネーミングメソッド(NAMES.DIRECTORY_PATH) を sqlnet.ora に保存
+* ローカルネットサービス名構成
+  * ネットサービス名と接続記述子の対応付けた情報を tnsnames.ora に保存
+* ディレクトリ使用構成
+  * ディレクトリサーバーを使用するための ldap.ora ファイルの構成
+
+# 静的サービスと動的サービス(4-4)
+
+* 静的サービス
+  * listener.ora に接続先 DB サービスを明示的に記述
+* 動的サービス
+  * 各インスタンスは動的にリスナーに DB サービスを登録できる
+  * 11g までは **PMON**、 12c からは **LREG** バックグラウンドプロセスが登録
+
+# tnsping(4-8)
+
+指定したネットサービス名や接続記述子でリスナーまでの接続確認
+もちろんポートなども一致してないと通らない。
+ただし sqlplus などの接続は、インスタンスが起動していなかったりリスナーにサービス登録されていないとできない。
+
+# 専用サーバー接続(4-9)
+
+* tnsnames.ora の接続記述子に `SERVER=DEDICATED` で専用サーバー接続
+* 共有サーバー接続でできないこと
+  * 起動や停止などの管理
+  * RMAN を利用したバックアップとリカバリ
+
+# DB リンク(4-10)
+
+以下の `CURRENT_USER` は現セッションのグローバルユーザー(ディレクトリサーバーを利用したエンタープライズユーザー)
+
+```sql
+CREATE PUBLIC DATABASE LINK tablename
+  CONNECT TO CURRENT_USER USING 'REPORT'
+```
+
+# 特権(5-2)
+
+* SYSOPER
+  * DB の起動停止、基本バックアップとリカバリ、ARCHIVELOGモード変更
+* SYSDBA
+  * SYSOPER + DB作成 + PITR(Point-in-time リカバリ)、すべてのディクショナリアクセス
+
+# システム権限とオブジェクト権限(5-4)
+
+* システム権限
+  * `CREATE TABLE` や `CREATE SESSION` などの権限
+  * `GRANT <権限> TO <user> WITH ADMIN OPTION` で渡されたユーザーは他に渡せる
+  * 他の `ADMIN OPTION` があるユーザーなら誰でも消せる
+  * **連鎖しない**
+* オブジェクト権限
+  * あるオブジェクトへのアクセス権限
+  * `WITH GRANT OPTION` で他のユーザーにも権限付与できる
+  * **付与したユーザーしか** 消せない(孫とかもだめ)
+  * **連鎖する**
+
+# 権限分析(5-5)
+
+* `DBMS_PRIVILEGE_CAPTURE` パッケージを利用
+* 以下の手順でレポート取得
+  * `ENABLE_CAPTURE` で開始
+  * 通常の SQL 操作
+  * `DISABLE_CAPTURE` で取得終了
+  * `GENERATE_RESULT` でレポート取得
+    * 無効化しただけではレポートは生成されない
+
+# リソース制限(5-7)
+
+`RESOURCE_LIMIT=TRUE` の場合に適用される
+
+# プロファイルを生成するファンクション(5-9)
+
+* `$ORACLE_HOME/rdbms/admin/utlpwdmg.sql` でプロファイル生成できる
+* 12c では以下のプロファイルが作成される
+  * `ora12c_verify_function`
+  * `ora12c_strong_verify_function`
+  * 教科書だと以下も生成されるらしいが未確認
+    * `VERIFY_FUNCTION_11G`
+    * `VERIFY_FUNCTION`
+* SYS ユーザーで実行する
+* **SYS ユーザー以外に適用される**
+
+# セグメント(6-1)
+
+* セグメントはエクステントの集合
+* `UNIFORM` 句で均一なサイズのエクステント
+  * 大きいサイズも OK
+  * 指定しない場合は 64k から始まる可変エクステント
+
+# Oracle Managed Files, OMF (6-3)
+
+DB 内のファイルを直接管理する必要を無くす機能
+
+* ファイルを格納するディレクトリ指定
+* DB ファイル作成時に自動で物理ファイル名指定
+* DB ファイル作成時に自動で物理ファイル削除
+  * ただし作成後に勝手に名前変えたら無理
+* ASM では内部的に OMF が使用される
+* DATAFILE 作成時にサイズ等を指定しなければ　100M の自動拡張が適用される
+
+以下の初期化パラメータ設定
+
+* `DB_CREATE_FILE_DEST`
+  * データファイルと一時ファイルの保存場所
+* `DB_CREATE_ONLINE_LOG_DEST_n`
+  * 制御ファイルと REDO ログファイルの格納場所
+  * 指定しなければ `DB_CREATE_FILE_DEST` と同じ場所
+  * n は 1から5の値が入り、複数ディレクトリにミラー化できる
+* `DB_RECOVERY_FILE_DEST`
+  * 高速リカバリ領域
+  * 指定しなければ `DB_CREATE_FILE_DEST` と同じ場所
+
+# 断片化(7-3)
+
+以下の方法がある
+
+* Data Pump エクスポート/インポート
+  * インポート完了まで表へのアクセスができない
+* ALTER TABLE ... MOVE
+  * MOVE 時にオフライン
+  * 完了まで DML を受け付けない
+* セグメントの縮小
+  * セグメント内の空き領域をまとめて解放
+  * 圧縮時は DML を受付可能
+  * ただし HWM の変更にはディクショナリロックが必要
+  * オンライン重視の場合は圧縮のみの `COMPACT` 句を使用
+* オンライン再定義
+  * 変更後の定義で仮表作成
+  * `DBMS_REDEFINITION` パッケージを使用して再定義
+  * 元表と仮表の2倍の領域が必要だが DML を受け付ける
+
+# 表圧縮(7-6)
+
+圧縮したい場合の定義方法
+
+```sql
+CREATE TABLE tablename(col1 number)
+ROW STORE COMPRESS ADVANCED
+```
+
+* 基本表圧縮
+  * `ROW STORE COMPRESS BASIC` 句で設定
+  * ダイレクトロードのみ圧縮
+    * SQL*Loader のダイレクトパス
+    * `CREATE TABLE AS SELECT`
+    * パラレルダイレクトインサート
+    * APPEND ヒント付き `INSERT INTO SELECT`
+  * ブロック内の連続した空き領域の最大化
+  * デフォルトの PCTFREE 属性が 0 になる
+* 拡張行圧縮
+  * `ROW STORE COMPRESS ADVANCED` 句で設定
+  * ダイレクトロード時と通常の DML の両方で圧縮
+  * 行、列の重複値をブロック先頭のシンボル表へのポインタに置換
+  * 非圧縮に必要な情報をブロック内に格納
+* ハイブリッド列圧縮
+  * `COMPRESS FOR QUERY` 句、`COMPRESS FOR ARCHIVE` 句
+  * Exadata、Pillar Axion、Sun ZFS Storage Appliace(ZFSSA) ストレージで利用できる
+  * 行のグループを列形式で格納するため、指定列をまとめて圧縮ユニットに格納
+
+MERGE = UPDATE + INSERT
+
+# 遅延セグメント作成(7-8)
+
+Oracle DB 11.2.0.1 はパーティション表、パーティション索引にも遅延セグメント作成を適用できない
+
+# 索引構成表(7-8)
+
+# 自動セグメントアドバイザ(7-11)
+
+* 対象表領域について AWR スナップショットからサンプリングされた分析データを抽出
+* デフォルトは 1日1回
+* **対象となる表領域やセグメントは指定できない**
+* 分析が完了しなかったら次回続きを行う
+
+# RESUMABLE (7-12)
+
+* `ALTER SESSION ENABLE RESUMABLE` は `RESUMABLE` 権限のみあれば実行できる
+
+# UNDO_RETENTION(8-1)
+
+* `UNDO_RETENTION` は秒
+* UNDO 表領域に `RETENTION_GUARANTEE` が設定されていた場合は、`UNDO_RETENTION` による保存期間中に上書きしようとしているトランザクション側をエラーにして保護を強制できる
+
+# 統合監査が有効な場合(10-2)
+
+* 従来の監査証跡に **記録しない**
+* 統合監査証跡は AUDSYS スキーマにのみ保存される
+* 設定は以下 2 step
+  * `CREATE AUDIT POLICY`
+  * `AUDIT POLICY`
+
+ただし以下は **(統合監査の有効無効に限らず)常に監査される**
+
+* DB **起動前** の特権ユーザーによるトップレベル文
+  * 特権ユーザー: SYSDBA, SYSOPER など
+  * トップレベル文: 接続や STARTUP/SHUTDOWN など
+  * 非統合監査モードでも監査される
+* 監査ポリシー管理
+  * `CREATE/ALTER/DROP AUDIT POLICY`、`AUDIT` や `NO AUDIT`
+* FGA 管理
+  * `DBMS_FGA` パッケージの使用
+* 監査証跡管理
+  * `DBMS_AUDIT_MGMT` パッケージ、`AUDSYS` スキーマの表への `ALTER TABLE`
+* RMAN による処理
+  * Backup、Restore、Recover 文
+
+# アプリケーションコンテキスト(10-3)
+
+# キュー書き込みモード(10-4)
+
+# 12cの統合監査(10-6)
+oracle ホーム毎に有効化、明示していないばあい　は混合モード
