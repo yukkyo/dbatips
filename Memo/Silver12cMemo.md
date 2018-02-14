@@ -1,6 +1,46 @@
 問題を解いたり教科書読んだときのポイント
 カッコの中は章と問題番号
 
+# 解答テクニック
+
+* 消去法
+  * 消去法で明らかに違う選択肢を外す
+    * 常に～
+    * 必ず～
+    * ～する必要がある
+    * ～することがある
+    * ～する場合もある
+  * 苦し紛れの選択肢もある
+* 英語に訳す
+  * 選択肢がどれも選べない時、問題の意味がしっくりこない時は英語に訳して考える
+    * または -> or
+    * いずれか -> any
+    * 表を記述すると -> 表を DESCRIBE(SQL*Plus DESCRIBE コマンド)すると
+    * DB を開く/閉じる/非マウントする -> DB を OPEN/CLOSE/NOMOUNT にする
+    * 復元する -> restore する
+    * から -> from
+* 複数選択
+  * 例: ～するには何をしますか。3つ選択してください。
+    * a
+    * b
+    * c
+    * d
+    * e
+  * A & B、A & C (B & C はない)といったケースで、他の候補がなければ、A,B,C の3つを選択
+* 受験時のポイント
+  * コマンドとその出力(エラーメッセージ含む)、ディクショナリの問い合わせ結果での出題は注意深く読む
+  * 似た問題が出てくることがあるので、不安な問題は保留しておいて、また後で見直す
+
+# 受験にあたって
+
+以下のマニュアルに目を通すと理解が深まる
+
+* 管理者ガイド
+* Oracle Database 概要
+* Oracle Database アップグレードガイド
+
+
+
 # Data Pump
 
 * 12c ～ 全体トランスポータブル・エクスポート/インポート(フル・トランスポータブル・エクスポート/インポート)
@@ -415,3 +455,102 @@ Oracle DB 11.2.0.1 はパーティション表、パーティション索引に�
 
 # 12cの統合監査(10-6)
 oracle ホーム毎に有効化、明示していないばあい　は混合モード
+
+# DBCA から設定できること
+
+* Oracle Database Vault の有効化
+* Enterprise Manager Cloud Control への登録
+* Label Security の登録と有効化
+
+以下はできない
+
+* 推奨のバックアップの有効化
+
+# Oracle Restart
+
+* スタンドアロン・サーバー用の Oracle Grid Infrastructure
+  * Oracle Restart
+    * 監視対象のコンポーネント
+      * データベースインスタンス
+      * Oracle ASM インスタンス
+      * Oracle ASM ディスクグループ
+      * Oracle Notification Services(ONS)
+    * ※ 作成方法によっては監視対象に自動で追加されない
+  * Oracle ASM
+* コンポーネントの追加、削除、起動停止、変更、有効化、無効化を行う場合
+  * `srvctl add` など
+
+## srvctl と crsctl の用途の違い
+
+* srvctl
+  * Oracle から提供されるリソースの管理
+    * リスナー
+    * インスタンス
+    * ディスクグループ
+    * ネットワーク
+* crsctl
+  * Oracle Clusterware およびそのリソースの管理
+
+# Oracle Restart の制御
+
+* Oracle Restart は OS の init デーモンによって起動
+* Oracle Clusterware Control(CRSCTL) ユーティリティを使用して、Oracle Restart の状態を制御できる
+  * `$ crsctl config has` : Oracle Restart の構成を表示
+  * `$ crsctl {enable | disable} has` : Oracle Restart の自動再起動の有効化・無効化
+  * `$ crsctl {start | stop} has` : Oracle Restart の起動・停止
+* CRSCTL ユーティリティを使用して Oracle Restart を停止すると Oracle Restart 管理下のコンポーネントも停止される
+
+# アップグレードと移行で押さえること
+
+* それぞれの特徴、基本的な手順
+  * DBUA
+  * 手動(STARTUP UPGRADE)
+  * Expdp / Impdp
+* ツール
+  * preupgrd.sql: アップグレード前情報ツール
+  * catctl.pl: パラレル・アップグレード・ユーティリティ
+
+Oracle Database アップグレードガイド 12c リリース
+
+# アップグレード前のパフォーマンス・テスト
+
+* データベース・リプレイ
+  * 本番 DB 上でのワークロードをキャプチャーし、テスト環境上でリプレイしてパフォーマンスをテストできる
+  * テスト環境でのリプレイ後、リプレイ前の状態にデータを復元する
+* SQL パフォーマンス・アナライザ
+  * 用意した SQL チューニング・セットについて、リリースやパラメータ設定などを変更した場合にどのような影響が出るかテストすることができる
+
+
+
+# リスナー登録プロセス(LREG)
+
+* データベースインスタンスおよびディスパッチャプロセスに関する情報を Oracle Net Listener に登録
+* LREG からリスナーに以下の情報が提供される
+  * データベースサービス名
+  * サービスに関連づけられたインスタンス名とその現在の負荷および最大負荷
+  * サービス・ハンドラ(ディスパッチャおよび専用サーバー)のタイプ、プロトコル・アドレス、その現在の負荷および最大負荷
+* リスナー起動後に LREG により動的登録されるまで最大 60秒かかる
+* `ALTER SYSTEM REGISTER` コマンドにより手動で登録
+
+# ユーザーの認証方式
+
+* パスワード・ファイルはインスタンスを起動する特権ユーザーの認証に使用する
+  * それ以外のユーザーのパスワードは含まない
+
+# Oracle LInux 6 および Oracle RDBMS Pre-Install resource_parameters
+
+* Oracle Grid Infrastructure および Oracle Database のインストールに必要な追加パッケージを自動的にインストール
+* OS の構成
+  * カーネル・パラメータの設定
+  * 以下の OS ユーザー、グループの構成
+    * oracle : Oracle Database インストール所有者
+    * oinstall : Oracle インベントリ・グループ
+    * dba : Oracle 管理権限
+
+# サイレントモードによるインストール・構成
+
+* 提供されるテンプレートを元にレスポンス・ファイルを用意することで、サイレント・モード(非対話型)でインストール・構成を行うことができる。
+* `./runinstaller -silent -responsefile <filename>`
+* Oracle Universal Installer を対話型モードで実行し、「サマリー」ページで「レスポンスファイルの保存」を行うことも可能
+* ASMCA、DBCA、NetCA もサイレントモードで実行可能
+*
