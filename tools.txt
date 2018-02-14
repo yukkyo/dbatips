@@ -1,0 +1,74 @@
+[ 2017年11月-2018年4月 の案件で役に立ったパッケージ一覧 ]
+
+* Rlogin
+  * 各セッションをタブ化して「Ctrl + 数字キー」で移動できる
+  * 接続情報をアプリ内で保存できるので、外部にファイルやリンクとして持っておく必要がない
+* WinMerge
+  * ファイル差分が出せる。これで修正前後の SQL の差分を送ったりした。
+* WinSCP
+  * ssh 先とのファイルのやり取りが楽になる。
+* Lhaplus
+  * 解凍ソフト
+* Firefox quantum(57)
+  * Add-ons
+    * Disconnect: SNS などのトラッキング防止。表示が速くなる
+    * Vim Vixen: Vim 風に使える神のアドオン。かつての Vimperator ほどではないが、結構カバーできている
+* Tablacus Explorer
+  * なれると楽なエクスプローラー
+  * フォルダの何もないところをダブルクリックで一つ上のディレクトリに移動できて地味にお気に入り
+  * Add-ons
+    * 6分割
+    * Everything
+* エディタ関連
+  * Atom
+    * パッケージ一覧(apm list --installed --bare で一覧出せる)
+      * atomic-emacs@0.12.1 (emacs 風に操作できる)
+      * highlight-column@0.5.4 (列(縦)にハイライト表示できる。SQL の実行計画などが見やすくなるのでおすすめ)
+        * ただし描画がやや遅くなるっぽい？
+      * language-gfm-enhanced@0.92.0 (markdown 用)
+      * language-markdown@0.25.1 (markdown 用)
+      * language-plantuml@0.2.0 (markdown で uml 描く用)
+      * markdown-preview-enhanced@0.15.1 (markdown 用)
+      * plantuml-viewer@0.7.2 (markdown で uml 描く用)
+      * qolor@0.4.2 (SQL ハイライト表示。スキーマ名とか見やすくなる)
+      * split-diff@1.5.1 (差分表示)
+      * Sublime-Style-Column-Selection@1.7.4 (Alt 押しながらマウス選択で矩形指定できる)
+      * git-Plus
+        * git log が見やすいのでおすすめ
+  * サクラエディタ
+    * 軽いものみたいときに
+* jdk
+* SQL developer
+* TortoiseSVN
+* Git for windows
+  * たしか Docker for windows などについてきた
+  * 右クリック → 「Git Bash Here」でその場から git コマンドを叩けるので便利
+* Virtualbox
+  * これもたしか Docker for windows などについてきた
+* pandoc
+* graphviz(markdown から UML図作るとき用)
+* Docker toolbox for windows
+  * 仮想環境
+  * jupyternotebook/datascience-notebook でだいたい python はなんとかなる
+    * pip パッケージ
+      * jupyter-themes:
+* CubePDF
+  * Astahで作成した ER 図を pdf にするときに使用
+* JPdfBookmarks
+  * ER図.pdf に対し目次をつけるために使用
+* SQL formatter application(poor mans ~)
+  * SQL の整形に使える
+  * ログから SQL 復元するときなどに活用
+  * http://architectshack.com/PoorMansTSqlFormatter.ashx#Download_4
+
+
+
+[ Windows 7 スタートアップ登録 ]
+VPN 接続系は自動で起動するようにしたい。
+以下の方法でできる。
+
+* WinKey + R から "shell:startup" を起動
+* エクスプローラーでフォルダが開くので、起動させたいアプリのショートカットを格納する
+
+[ その他豆知識 ]
+* プロジェクト共有ファイル用リポジトリ等は、ルート(C:¥)に置くとスッキリする
