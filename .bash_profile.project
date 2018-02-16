@@ -1,0 +1,9 @@
+# 2017-11 - 2018-04 project
+
+# User profile enviroment and startup programs
+# back space for sqlplus
+stty erase ^H
+
+# setting vim alias
+alias vi='vim -u /home/oracle/work/fujimoto/.vimrc'
+alias vimdiff='vimdiff -u /home/oracle/work/fujimoto/.vimrc'
