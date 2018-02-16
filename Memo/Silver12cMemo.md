@@ -553,4 +553,59 @@ Oracle Database アップグレードガイド 12c リリース
 * `./runinstaller -silent -responsefile <filename>`
 * Oracle Universal Installer を対話型モードで実行し、「サマリー」ページで「レスポンスファイルの保存」を行うことも可能
 * ASMCA、DBCA、NetCA もサイレントモードで実行可能
-*
+
+# データリカバリ・アドバイザで診断できる障害
+
+* アクセスできないデータファイルや制御ファイルなどのコンポーネント
+  * 存在しない、適切なアクセス権限がない、オフラインになっているなど
+* ブロック・チェックサム障害、無効なブロック・ヘッダー・フィールド値などの物理的な破損
+* 他のデータベース・ファイルより古いデータファイルなどの矛盾
+* ハードウェア・エラー、OSのドライバの障害、OSのリソース制限(ex. オープンしているファイル数)の超過などの I/O 障害
+
+# Database Smart Flash Cache
+
+SSD を2次キャッシュとして利用する方法
+
+## 適用を検討するケース
+
+* DB が Solaris または Oracle Linux OS であること
+* AWR レポートまたは STATSPACK レポートのバッファ・プール・アドバイザセクションに以下のことが書かれてる
+  * バッファキャッシュのサイズを2倍にすると効果的
+* `db file sequential read` が上位待機イベント
+* 手元に呼びの CPU がある
+
+## 初期化パラメータ
+
+* `DB_FLASH_CACHE_FILE`
+* `DB_FLASH_CACHE_SIZE`
+
+# フラッシュバック機能について
+
+機能を使用するには以下の構成タスクを実行する必要がある。
+
+* 自動 UNDO 管理
+  * 自動 UNDO 管理(AUM) を有効化する
+    * `UNDO_MANAGEMENT`
+    * `UNDO_TABLESPACE`
+    * `UNDO_RETENTION`
+* Flashback Transaction Query に関する DB 構成
+  * ユーザーまたは管理者が以下を実行
+    * DB が 10.0 と互換性があることを確認
+    * サプリメンタル・ロギングを有効にする
+      * `ALTER DATABASE ADD SUPPLEMENTAL LOG DATA`
+* フラッシュバック・トランザクションに関するデータベースの構成
+  * DB が MOUNT されているが、 OPEN していない状態で ARCHIVELOG を有効化
+    * `ALTER DATABASE ARCHIVELOG;`
+  * 1 つ以上のアーカイブログを開く
+    * `ALTER SYSTEM ARCHIVE LOG CURRENT;`
+  * 必要最低限の主キーのサプリメンタル・ロギングが有効になっていない場合、有効化する
+    * `ALTER DATABASe ADD SUPPLEMENTAL LOG DATA;`
+    * `ALTER DATABASE ADD SUPPLEMENTAL LOG DATA (PRIMARY KEY) COLUMNS;`
+  * 外部キーの依存性を追跡する場合は、外部キーのサプリメンタルロギングを有効化する
+    * `ALTER DATABASE ADD SUPPLEMENTAL LOG DATA (FOREIGN KEY) COLUMNS;`
+* 特定の LOB 列に対する Oracle Flashback 操作の有効化
+  * `ALTER TABLE` 文を `RETENTION` オプションとともに使用する
+* 必要な権限の付与
+
+
+#
