@@ -27,6 +27,7 @@ alter session set nls_timestamp_tz_format =  'yyyymmddhh24miss.ff' ;
 set termout         on
 
 set sqlprompt       '&_USER(&_CONNECT_IDENTIFIER)> '
+set sqlformat ansiconsole
 DEFINE _EDITOR=vi
 "
 
