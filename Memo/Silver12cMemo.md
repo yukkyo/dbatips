@@ -508,7 +508,7 @@ oracle ホーム毎に有効化、明示していないばあい　は混合モ�
   * Expdp / Impdp
 * ツール
   * preupgrd.sql: アップグレード前情報ツール
-  * catctl.pl: パラレル・アップグレード・ユーティリティ
+  * catctl.pl: ・アップグレード・ユーティリティ
 
 Oracle Database アップグレードガイド 12c リリース
 
@@ -599,7 +599,7 @@ SSD を2次キャッシュとして利用する方法
   * 1 つ以上のアーカイブログを開く
     * `ALTER SYSTEM ARCHIVE LOG CURRENT;`
   * 必要最低限の主キーのサプリメンタル・ロギングが有効になっていない場合、有効化する
-    * `ALTER DATABASe ADD SUPPLEMENTAL LOG DATA;`
+    * `ALTER DATABASE ADD SUPPLEMENTAL LOG DATA;`
     * `ALTER DATABASE ADD SUPPLEMENTAL LOG DATA (PRIMARY KEY) COLUMNS;`
   * 外部キーの依存性を追跡する場合は、外部キーのサプリメンタルロギングを有効化する
     * `ALTER DATABASE ADD SUPPLEMENTAL LOG DATA (FOREIGN KEY) COLUMNS;`
@@ -608,4 +608,76 @@ SSD を2次キャッシュとして利用する方法
 * 必要な権限の付与
 
 
-#
+# SQL 実行計画管理
+
+## SPM 展開アドバイザの自動タスクの構成方法
+
+* SQL*Plus を使って適切な権限で DBに接続して現在のタスク設定を問い合わせる
+  ```sql
+  COL PARAMETER_NAME FORMAT a25
+  COL VALUE FORMAT a10
+  SELECT PARAMETER_NAME, PARAMETER_VALUE AS "VALUE"
+  FROM   DBA_ADVISOR_PARAMETERS
+  WHERE
+    TASK_NAME = 'SYS_AUTO_SPM_EVOLVE_TASK'
+    AND (
+      PARAMETER_NAME = 'ACCEPT_PLANS'
+      OR PARAMETER_NAME = 'TIME_LIMIT'
+    )
+  ;
+  ```
+
+  * 次のプロシージャでパラメータを設定する
+    ```sql
+    BEGIN
+      DBMS_SPM.SET_EVOLVE_TASK_PARAMETER(
+        task_name => 'SYS_AUTO_SPM_EVOLVE_TASK'
+        , parameter => parameter_name  # ex. LOCAL_TIME_LIMIT, ACCEPT_PLANS
+        , value     => value
+      );
+    END;
+    /
+    ```
+
+## SPM の手動展開
+
+* 展開タスクを作成します。
+  * `DBMS_SPM.CREATE_EVOLVE_TASK`
+* オプションで、展開タスクのパラメータを設定します。
+  * `DBMS_SPM.SET_EVOLVE_TASK_PARAMETER`
+* 展開タスクを実行します。
+  * `DBMS_SPM.EXECUTE_EVOLVE_TASK`
+* タスク内の推奨事項を実装します。
+  * `DBMS_SPM.IMPLEMENT_EVOLVE_TASK`
+* タスクの結果をレポートします。
+  * `DBMS_SPM.REPORT_EVOLVE_TASK`
+
+# 拡張統計収集方法
+
+* 列グループの使用状況などをさらに取得してオプティマイザの精度を上げる。
+* 列間の相関まで見る
+
+具体的に実行する方法は以下の通り。
+
+* `DBMS_STATS.SEED_COL_USAGE(<sqlset_name>, <sqlset_owner_name>, <seconds>)`
+* 対象の表に対して必要なクエリを実行
+* `SELECT DBMS_STATS.REPORT_COL_USAGE(<owner>, <table_name>) FROM dual` を実行してレポートを生成
+* `SELECT DBMS_STATS.CREATE_EXTENDED_STATS(<owner>, <table_name>)` を実行して拡張統計を実行
+
+# スキーマオブジェクトについて
+
+プロファイルやロールなどの一部のデータベースオブジェクトはスキーマに属さない
+
+以下はスキーマオブジェクト
+
+* 表、索引、パーティション、ビュー、順序、ディメンション、シノニム
+* PL/SQL サブプログラムと PL/SQL パッケージ
+
+# 共通ユーザー
+
+* cdb と pdb に共通するユーザー
+* `C##` で始まるユーザー名
+* CDB$ROOT に接続した状態じゃないと作成できない
+* CDB$ROOT ではローカルユーザーは作成できない
+* 共通ユーザーで各 PDB に接続するには、事前に各 PDB で CREATE SESSION 権限を付与しておく必要があるo
+* 共通ユーザーを削除する際は CONTAINER=ALL を指定する。しないとエラー
